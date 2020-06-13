@@ -3,6 +3,7 @@ import collections
 import copy
 
 class Grammer:
+    '''Recieving Data'''
     def __init__ (self, input_data: list):
         self.var_num = int(input_data.pop(0))
         self.cfg = dict()
@@ -89,6 +90,7 @@ class Grammer:
             if copy_trv == terminal_reachable_variables:
                 break
         if compare(list(set(terminal_reachable_variables)), self.cfg.keys()):
+            # Dependency Graph checking
             reachable_vars = list()
             reachable_vars.append(self.start_var)
             temp = list()
@@ -108,10 +110,49 @@ class Grammer:
                 return True
         else:
             return False
+    '''---------------------------------------------------------------------------------------------'''
+    '''ChangeToGreibachForm'''
+    def ChangeToGreibachForm(self):
+        pass
 
+
+
+
+
+    '''---------------------------------------------------------------------------------------------'''
+    '''ChangeToChomskyForm'''
+    def ChangeToChomskyForm(self):
+        pass
+
+
+
+
+
+    '''---------------------------------------------------------------------------------------------'''
+    '''DeleteTrash'''
+    def DeleteTrash(self):
+        pass
+
+
+
+
+
+    '''---------------------------------------------------------------------------------------------'''
+    '''IsGenerateByGrammer'''
+    def IsGenerateByGrammer(self):
+        pass
+
+
+
+
+
+    '''---------------------------------------------------------------------------------------------'''
     def __repr__(self):
         return str([self.cfg, self.isChomskyForm, self.isGreibachNormalForm, self.isDeleteTrash])
 
+
+
+''''''''''''''''''''''''''''''''''''''
 # G = Grammer([
 #     5,
 #     "<START> -> amin<SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",

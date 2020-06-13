@@ -1,5 +1,6 @@
 import re
 import collections
+import copy
 
 class Grammer:
     def __init__ (self, input_data: list):
@@ -17,6 +18,8 @@ class Grammer:
                 else:
                     right.append(item)
             self.cfg[rule[0][1:-1:]] = right
+        keys = list(self.cfg.keys())
+        self.start_var = keys[0]
         self.isChomskyForm = self.check_if_chomsky()
         self.isGreibachNormalForm = self.check_if_greibach()
         self.isDeleteTrash = self.check_if_delete_trash()
@@ -75,25 +78,54 @@ class Grammer:
             if checker:
                 terminal_reachable_variables.append(key)
         none_trv = [i for i in self.cfg.keys() if i not in terminal_reachable_variables]
-        for key in none_trv:
-            for des in self.cfg[key]:
-                if type(des) == list:
-                    temp = [i for i in des if i.isupper()]
-                    if compare(terminal_reachable_variables, temp):
-                        terminal_reachable_variables.append(key)
-        if compare(terminal_reachable_variables, self.cfg.keys()):
+        while True:
+            copy_trv = copy.deepcopy(terminal_reachable_variables)
+            for key in none_trv:
+                for des in self.cfg[key]:
+                    if type(des) == list:
+                        temp = [i for i in des if i.isupper()]
+                        if all(i in terminal_reachable_variables for i in temp) and key not in terminal_reachable_variables:
+                            terminal_reachable_variables.append(key)
+            if copy_trv == terminal_reachable_variables:
+                break
+        if compare(list(set(terminal_reachable_variables)), self.cfg.keys()):
             reachable_vars = list()
-            reachable_vars.append(self.cfg.keys()[0])
+            reachable_vars.append(self.start_var)
+            temp = list()
+            temp.append(self.start_var)
+            while temp:
+                var = temp.pop()
+                if var in self.cfg.keys():
+                    for des in self.cfg[var]:
+                        if type(des) == list:
+                            for reach in des:
+                                if reach.isupper() and reach not in reachable_vars:
+                                    reachable_vars.append(reach)
+                                    temp.append(reach)
+                else:
+                    continue
+            if all([i in reachable_vars for i in self.cfg.keys()]):
+                return True
+        else:
+            return False
 
     def __repr__(self):
-        return str([self.cfg, self.isChomskyForm, self.isGreibachNormalForm])
+        return str([self.cfg, self.isChomskyForm, self.isGreibachNormalForm, self.isDeleteTrash])
+
+# G = Grammer([
+#     5,
+#     "<START> -> amin<SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
+#     "<SUBJECT> -> i|we",
+#     "<DISTANCE> ->  ",
+#     "<VERB> -> eat|drink |go",
+#     "<OBJECTS> -> food|water"
+# ])
 
 G = Grammer([
-    5,
-    "<START> -> amin<SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
-    "<SUBJECT> -> i|we",
-    "<DISTANCE> ->  ",
-    "<VERB> -> eat|drink |go",
-    "<OBJECTS> -> food|water|lamda"
+    4,
+    "<S> -> a<S>|a<A>|b<B>",
+    "<C> -> a<D>",
+    "<B> -> a<C>",
+    "<D> -> b"
 ])
 print(G.__repr__())

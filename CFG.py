@@ -124,11 +124,38 @@ class Grammer:
     '''---------------------------------------------------------------------------------------------'''
     '''ChangeToChomskyForm'''
     def ChangeToChomskyForm(self):
-        pass
-
-
-
-
+        cfg_copy = self.DeleteTrash()
+        v_counter = 0
+        v_checking = dict()
+        keys = list(cfg_copy.keys())
+        for key in keys:
+            for des in cfg_copy[key]:
+                if type(des) == list:
+                    temp = list()
+                    for item in des:
+                        if item.isupper():
+                            temp.append(item)
+                        else:
+                            cfg_copy["T'"+item.upper()] = [item]
+                            temp.append("T'"+item.upper())
+                    while len(temp) > 2:
+                        var1 = temp.pop()
+                        var2 = temp.pop()
+                        checking_key = var1+var1
+                        if checking_key not in v_checking.keys():
+                            v_index = 'V'+str(v_counter)
+                            cfg_copy[v_index] = [var2, var1]
+                            v_checking[checking_key] = v_index
+                            v_counter += 1
+                            temp.append(v_index)
+                        else:
+                            v_index = v_checking[checking_key]
+                            temp.append(v_index)
+                            
+                    cfg_copy[key].remove(des)
+                    cfg_copy[key].append(temp)
+                    
+        return cfg_copy
 
     '''---------------------------------------------------------------------------------------------'''
     '''DeleteTrash'''
@@ -272,11 +299,19 @@ class Grammer:
 #     "<OBJECTS> -> food|water|lamda"
 # ])
 
+# G = Grammer([
+#     4,
+#     "<S> -> a<S>|<A>|<C>",
+#     "<A> -> a",
+#     "<B> -> aa",
+#     "<C> -> a<C>b",
+# ])
+
 G = Grammer([
     4,
-    "<S> -> a<S>|<A>|<C>",
-    "<A> -> a",
-    "<B> -> aa",
-    "<C> -> a<C>b",
+    "<S> -> <A><B>a<B>",
+    "<A> -> aab<B>|b",
+    "<B> -> <A>c",
 ])
-print(G.DeleteTrash())
+
+print(G.ChangeToChomskyForm())

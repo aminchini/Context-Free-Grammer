@@ -32,6 +32,8 @@ class Grammer:
             for rule in rules:
                 if type(rule) == list and len(rule) != 2:
                     form1 = False
+                if type(rule) == list and len(rule) == 2 and any([i.lower() for i in rule]):
+                    form1 = False
         return form1 and form2
 
     def check_if_greibach(self):
@@ -68,7 +70,6 @@ class Grammer:
                     if len(rule) == 1:
                         return False
         # Useless Productions checking
-        unwanted = list()
         terminal_reachable_variables = list()
         for key in self.cfg.keys():
             checker = False
@@ -110,6 +111,7 @@ class Grammer:
                 return True
         else:
             return False
+
     '''---------------------------------------------------------------------------------------------'''
     '''ChangeToGreibachForm'''
     def ChangeToGreibachForm(self):
@@ -131,11 +133,119 @@ class Grammer:
     '''---------------------------------------------------------------------------------------------'''
     '''DeleteTrash'''
     def DeleteTrash(self):
-        pass
+        cfg_copy = copy.deepcopy(self.cfg)
 
+        # Remove Nullable Variables
+        null_vars = list()
+        for key in self.cfg.keys():
+            for des in self.cfg[key]:
+                if des == 'lamda':
+                    null_vars.append(key)
+                    cfg_copy[key].remove('lamda')
+        for null in null_vars:
+            for key in self.cfg.keys():
+                for des in self.cfg[key]:
+                    if type(des) == list and null in des:
+                        temp = [i for i in des if i != null]
+                        if len(temp) != 0:
+                            cfg_copy[key].append(temp)
 
+       # Remove Unit-Productions
+        def unit_finder():
+            units = list()
+            for key in cfg_copy.keys():
+                for des in cfg_copy[key]:
+                    if type(des) == list and len(des) == 1:
+                        units.append((key, des[0]))
+                        cfg_copy[key].remove(des)
+            return units
 
+        units = unit_finder()
+        while units:
+            unit = units.pop()
+            if unit[0] == unit[1]:
+                continue
+            if unit[0] == self.start_var:
+                for item in cfg_copy[unit[1]]:
+                    cfg_copy[self.start_var].append(item)
+                units += unit_finder()
+            else:
+                for key in cfg_copy.keys():
+                    for des in cfg_copy[key]:
+                        if type(des) == list and unit[0] in des:  
+                            new_list = copy.deepcopy(des)
+                            index = des.index(unit[0])
+                            new_list[index] = unit[1]
+                            cfg_copy[key].append(new_list)
+                            units += unit_finder()
+        empty_keys = list()
+        for key in cfg_copy.keys():
+            if len(cfg_copy[key]) == 0:
+                empty_keys.append(key)
+        for key in empty_keys:
+            del cfg_copy[key]
 
+        # Remove Useless Variables
+        def delete_useless(vars):
+            for item in vars:
+                del cfg_copy[item]
+                for key in cfg_copy.keys():
+                    for des in cfg_copy[key]:
+                        if type(des) == list and item in des:
+                            cfg_copy[key].remove(des)
+
+        def dependency_graph_remover():
+            reachable_vars = list()
+            reachable_vars.append(self.start_var)
+            temp = list()
+            temp.append(self.start_var)
+            while temp:
+                var = temp.pop()
+                if var in cfg_copy.keys():
+                    for des in cfg_copy[var]:
+                        if type(des) == list:
+                            for reach in des:
+                                if reach.isupper() and reach not in reachable_vars:
+                                    reachable_vars.append(reach)
+                                    temp.append(reach)
+                else:
+                    continue
+            if not all([i in reachable_vars for i in cfg_copy.keys()]):
+                return [i for i in cfg_copy.keys() if i not in reachable_vars]
+            else:
+                return []
+
+        should_be_deleted = list()
+        compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
+        terminal_reachable_variables = list()
+        for key in cfg_copy.keys():
+            checker = False
+            for des in cfg_copy[key]:
+                if type(des) != list:
+                    checker = True
+                    break
+            if checker:
+                terminal_reachable_variables.append(key)
+        none_trv = [i for i in cfg_copy.keys() if i not in terminal_reachable_variables]
+        while True:
+            copy_trv = copy.deepcopy(terminal_reachable_variables)
+            for key in none_trv:
+                for des in cfg_copy[key]:
+                    if type(des) == list:
+                        temp = [i for i in des if i.isupper()]
+                        if all(i in terminal_reachable_variables for i in temp) and key not in terminal_reachable_variables:
+                            terminal_reachable_variables.append(key)
+            if copy_trv == terminal_reachable_variables:
+                break
+        if not compare(list(set(terminal_reachable_variables)), cfg_copy.keys()):
+            should_be_deleted = [i for i in cfg_copy.keys() if i not in terminal_reachable_variables]
+            delete_useless(should_be_deleted)
+            should_be_deleted = dependency_graph_remover()
+            delete_useless(should_be_deleted)
+        else:
+            should_be_deleted = dependency_graph_remover()
+            delete_useless(should_be_deleted)
+        return cfg_copy
 
     '''---------------------------------------------------------------------------------------------'''
     '''IsGenerateByGrammer'''
@@ -155,18 +265,18 @@ class Grammer:
 ''''''''''''''''''''''''''''''''''''''
 # G = Grammer([
 #     5,
-#     "<START> -> amin<SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
+#     "<START> -> <SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
 #     "<SUBJECT> -> i|we",
 #     "<DISTANCE> ->  ",
-#     "<VERB> -> eat|drink |go",
-#     "<OBJECTS> -> food|water"
+#     "<VERB> -> eat|drink|go|<OBJECTS><SUBJECT>",
+#     "<OBJECTS> -> food|water|lamda"
 # ])
 
 G = Grammer([
     4,
-    "<S> -> a<S>|a<A>|b<B>",
-    "<C> -> a<D>",
-    "<B> -> a<C>",
-    "<D> -> b"
+    "<S> -> a<S>|<A>|<C>",
+    "<A> -> a",
+    "<B> -> aa",
+    "<C> -> a<C>b",
 ])
-print(G.__repr__())
+print(G.DeleteTrash())

@@ -115,11 +115,65 @@ class Grammer:
     '''---------------------------------------------------------------------------------------------'''
     '''ChangeToGreibachForm'''
     def ChangeToGreibachForm(self):
-        pass
+        cfg_copy = self.DeleteTrash()
+        keys = list(cfg_copy.keys())
+        for key in keys:
+            for des in cfg_copy[key]:
+                if type(des) == list:
+                    if des[0].islower():
+                        new_des = list()
+                        f_item = des.pop(0)
+                        new_des.append(f_item)
+                        for item in des:
+                            if item.isupper():
+                                new_des.append(item)
+                            else:
+                                cfg_copy["T'"+item.upper()] = [item]
+                                new_des.append("T'"+item.upper())
+                        cfg_copy[key].remove(des)
+                        cfg_copy[key].append(new_des)
+                    elif all([i.isupper() for i in des]):
+                        var = des.pop(0)
+                        for item in cfg_copy[var]:
+                            new_des = list()
+                            new_des.append(item)
+                            new_des += des
+                            cfg_copy[key].append(new_des)
 
+                        cfg_copy[key].remove(des)
+                    elif des[0] == key and des[1].islower():
+                        beta = list()
+                        alpha = list()
+                        cfg_cc = copy.deepcopy(cfg_copy[key])
+                        for item in cfg_cc:
+                            if type(item) != list:
+                                beta.append(item)
+                            elif item[0] == key and item[1].islower():
+                                alpha.append(item[1])
+                                cfg_copy[key].remove(item)
+                        for b in beta:
+                            cfg_copy[key].append([b, key+"'"])
+                        cfg_copy[key+"'"] = list()
+                        for a in alpha:
+                            cfg_copy[key+"'"].append([a, key+"'"])
+                    else:
+                        new_deses = list()
+                        f_item = des.pop(0)
+                        for terms in cfg_copy[f_item]:
+                            new_deses.append([terms])
+                        variables = list()
+                        for item in des:
+                            if item.isupper():
+                                variables.append(item)
+                            else:
+                                cfg_copy["T'"+item.upper()] = [item]
+                                variables.append("T'"+item.upper())
+                        for arr in new_deses:
+                            cfg_copy[key].append(arr + variables)
+                            
+                        cfg_copy[key].remove(des)
 
-
-
+        return cfg_copy
 
     '''---------------------------------------------------------------------------------------------'''
     '''ChangeToChomskyForm'''
@@ -309,9 +363,9 @@ class Grammer:
 
 G = Grammer([
     4,
-    "<S> -> <A><B>a<B>",
-    "<A> -> aab<B>|b",
-    "<B> -> <A>c",
+    "<S> -> <B><A><B>",
+    "<A> -> <A>a|b1|b2",
+    "<B> -> love"
 ])
 
-print(G.ChangeToChomskyForm())
+print(G.ChangeToGreibachForm())

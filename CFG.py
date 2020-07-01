@@ -330,42 +330,80 @@ class Grammer:
 
     '''---------------------------------------------------------------------------------------------'''
     '''IsGenerateByGrammer'''
-    def IsGenerateByGrammer(self):
-        pass
+    def IsGenerateByGrammer(self, string: str):
+        n = len(string)
+        cfg_chomsky = self.ChangeToChomskyForm()
+        r_dict = dict()
+        r = 0
+        for key in cfg_chomsky.keys():
+            r_dict[key] = r
+            r += 1
+        
+        cyk = list()
+        for i in range(n):
+            l1 = list()
+            for j in range(n):
+                l2 = list()
+                for k in range(r):
+                    l2.append(False)
+                l1.append(l2)
+            cyk.append(l1)
 
-
-
+        s = 0
+        for stt in string:
+            for elem in r_dict.keys():
+                for terminals in cfg_chomsky[elem]:
+                    if terminals == stt:
+                        v = r_dict[elem]
+                        cyk[0][s][v] = True
+            s += 1
+        for l in range(1, n):
+            for s in range(0, n-l):
+                for p in range(1, l+1):
+                    for key in cfg_chomsky.keys():
+                        for des in cfg_chomsky[key]:
+                            if type(des) == list:
+                                a = r_dict[key]
+                                b = r_dict[des[0]]
+                                c = r_dict[des[1]]
+                                if cyk[p-1][s][b] and cyk[l-p][s+p][c]:
+                                    cyk[l][s][a] = True
+        return cyk[n-1][0][0]
 
 
     '''---------------------------------------------------------------------------------------------'''
-    def __repr__(self):
+    def __str__(self):
         return str([self.cfg, self.isChomskyForm, self.isGreibachNormalForm, self.isDeleteTrash])
 
 
 
 ''''''''''''''''''''''''''''''''''''''
-# G = Grammer([
-#     5,
-#     "<START> -> <SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
-#     "<SUBJECT> -> i|we",
-#     "<DISTANCE> ->  ",
-#     "<VERB> -> eat|drink|go|<OBJECTS><SUBJECT>",
-#     "<OBJECTS> -> food|water|lamda"
-# ])
-
-# G = Grammer([
-#     4,
-#     "<S> -> a<S>|<A>|<C>",
-#     "<A> -> a",
-#     "<B> -> aa",
-#     "<C> -> a<C>b",
-# ])
-
 G = Grammer([
+    5,
+    "<START> -> <SUBJECT><DISTANCE><VERB><DISTANCE><OBJECTS>",
+    "<SUBJECT> -> i|we",
+    "<DISTANCE> ->  ",
+    "<VERB> -> eat|drink|go|<OBJECTS><SUBJECT>",
+    "<OBJECTS> -> food|water|lamda"
+])
+print(G)
+
+G1 = Grammer([
     4,
-    "<S> -> <B><A><B>",
-    "<A> -> <A>a|b1|b2",
-    "<B> -> love"
+    "<S> -> a<S>|<A>|<C>",
+    "<A> -> a",
+    "<B> -> aa",
+    "<C> -> a<C>b",
 ])
 
-print(G.ChangeToGreibachForm())
+print(G1.ChangeToGreibachForm())
+
+G2 = Grammer([
+    4,
+    "<S> -> <A><B>",
+    "<A> -> a",
+    "<B> -> b"
+])
+
+print(G2.ChangeToChomskyForm())
+print(G2.IsGenerateByGrammer('ab'))

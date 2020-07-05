@@ -32,7 +32,7 @@ class Grammer:
             for rule in rules:
                 if type(rule) == list and len(rule) != 2:
                     form1 = False
-                if type(rule) == list and len(rule) == 2 and any([i.lower() for i in rule]):
+                if type(rule) == list and len(rule) == 2 and any([i.islower() for i in rule]):
                     form1 = False
         return form1 and form2
 
@@ -109,6 +109,8 @@ class Grammer:
                     continue
             if all([i in reachable_vars for i in self.cfg.keys()]):
                 return True
+            else:
+                return False
         else:
             return False
 
@@ -198,7 +200,7 @@ class Grammer:
                         checking_key = var1+var1
                         if checking_key not in v_checking.keys():
                             v_index = 'V'+str(v_counter)
-                            cfg_copy[v_index] = [var2, var1]
+                            cfg_copy[v_index] = [[var2, var1]]
                             v_checking[checking_key] = v_index
                             v_counter += 1
                             temp.append(v_index)
@@ -331,7 +333,6 @@ class Grammer:
     '''---------------------------------------------------------------------------------------------'''
     '''IsGenerateByGrammer'''
     def IsGenerateByGrammer(self, string: str):
-        n = len(string)
         cfg_chomsky = self.ChangeToChomskyForm()
         r_dict = dict()
         r = 0
@@ -339,36 +340,46 @@ class Grammer:
             r_dict[key] = r
             r += 1
         
-        cyk = list()
-        for i in range(n):
-            l1 = list()
-            for j in range(n):
-                l2 = list()
-                for k in range(r):
-                    l2.append(False)
-                l1.append(l2)
-            cyk.append(l1)
+        R = dict()
+        c = 1
+        for key in cfg_chomsky.keys():
+            R[c] = key
+            c += 1
 
-        s = 0
-        for stt in string:
-            for elem in r_dict.keys():
-                for terminals in cfg_chomsky[elem]:
-                    if terminals == stt:
-                        v = r_dict[elem]
-                        cyk[0][s][v] = True
-            s += 1
-        for l in range(1, n):
-            for s in range(0, n-l):
-                for p in range(1, l+1):
+        s_dict = dict()
+        n = 1
+        for st in string:
+            s_dict[n] = st
+            n += 1
+
+        cyk = dict()
+        for i in range(1, n):
+            d1 = dict()
+            for j in range(1, n):
+                d2 = dict()
+                for k in range(1, c):
+                    d2[k] = False
+                d1[j] = d2
+            cyk[i] = d1
+
+        for i in range(1, n):
+            for j in range(1, c):
+                for terminals in cfg_chomsky[R[j]]:
+                    if terminals == s_dict[i]:
+                        cyk[1][i][j] = True
+
+        for i in range(2, n):
+            for j in range(1, n-i+1):
+                for k in range(1, i):
                     for key in cfg_chomsky.keys():
                         for des in cfg_chomsky[key]:
                             if type(des) == list:
-                                a = r_dict[key]
-                                b = r_dict[des[0]]
-                                c = r_dict[des[1]]
-                                if cyk[p-1][s][b] and cyk[l-p][s+p][c]:
-                                    cyk[l][s][a] = True
-        return cyk[n-1][0][0]
+                                a = r_dict[key] + 1
+                                b = r_dict[des[0]] + 1
+                                c = r_dict[des[1]] + 1
+                                if cyk[k][j][b] and cyk[i-k][j+k][c]:
+                                    cyk[i][j][a] = True
+        return cyk[n-1][1][1]
 
 
     '''---------------------------------------------------------------------------------------------'''
@@ -400,10 +411,12 @@ print(G1.ChangeToGreibachForm())
 
 G2 = Grammer([
     4,
-    "<S> -> <A><B>",
+    "<S> -> <A><B><C><D>",
     "<A> -> a",
-    "<B> -> b"
+    "<B> -> b",
+    "<C> -> c",
+    "<D> -> d"
 ])
-
+print(G2)
 print(G2.ChangeToChomskyForm())
-print(G2.IsGenerateByGrammer('ab'))
+print(G2.IsGenerateByGrammer('abcd'))

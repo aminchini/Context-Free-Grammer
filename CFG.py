@@ -32,7 +32,7 @@ class Grammer:
             for rule in rules:
                 if type(rule) == list and len(rule) != 2:
                     form1 = False
-                if type(rule) == list and len(rule) == 2 and any([i.islower() for i in rule]):
+                if type(rule) == list and len(rule) == 2 and any([i.islower() or not i.isalpha() for i in rule]):
                     form1 = False
         return form1 and form2
 
@@ -42,9 +42,9 @@ class Grammer:
             counter = 0
             for rule in rules:
                 if type(rule) == list:
-                    if rule[0].islower():
+                    if rule[0].islower() or not rule[0].isalpha():
                         for i in rule[1::]:
-                            if i.islower():
+                            if i.islower() or not i.isalpha():
                                 result = False
                                 break
                     else:
@@ -122,7 +122,7 @@ class Grammer:
         for key in keys:
             for des in cfg_copy[key]:
                 if type(des) == list:
-                    if des[0].islower():
+                    if des[0].islower() or not des[0].isalpha():
                         new_des = list()
                         f_item = des.pop(0)
                         new_des.append(f_item)
@@ -143,14 +143,14 @@ class Grammer:
                             cfg_copy[key].append(new_des)
 
                         cfg_copy[key].remove(des)
-                    elif des[0] == key and des[1].islower():
+                    elif des[0] == key and (des[1].islower() or not des[1].isalpha()):
                         beta = list()
                         alpha = list()
                         cfg_cc = copy.deepcopy(cfg_copy[key])
                         for item in cfg_cc:
                             if type(item) != list:
                                 beta.append(item)
-                            elif item[0] == key and item[1].islower():
+                            elif item[0] == key and (item[1].islower() or not item[1].isalpha()):
                                 alpha.append(item[1])
                                 cfg_copy[key].remove(item)
                         for b in beta:
@@ -184,7 +184,9 @@ class Grammer:
         v_counter = 0
         v_checking = dict()
         keys = list(cfg_copy.keys())
+        result = dict()
         for key in keys:
+            result[key] = list()
             for des in cfg_copy[key]:
                 if type(des) == list:
                     temp = list()
@@ -192,7 +194,7 @@ class Grammer:
                         if item.isupper():
                             temp.append(item)
                         else:
-                            cfg_copy["T'"+item.upper()] = [item]
+                            result["T'"+item.upper()] = [item]
                             temp.append("T'"+item.upper())
                     while len(temp) > 2:
                         var1 = temp.pop()
@@ -200,7 +202,7 @@ class Grammer:
                         checking_key = var1+var1
                         if checking_key not in v_checking.keys():
                             v_index = 'V'+str(v_counter)
-                            cfg_copy[v_index] = [[var2, var1]]
+                            result[v_index] = [[var2, var1]]
                             v_checking[checking_key] = v_index
                             v_counter += 1
                             temp.append(v_index)
@@ -208,10 +210,11 @@ class Grammer:
                             v_index = v_checking[checking_key]
                             temp.append(v_index)
                             
-                    cfg_copy[key].remove(des)
-                    cfg_copy[key].append(temp)
+                    result[key].append(temp)
+                else:
+                    result[key].append(des)
                     
-        return cfg_copy
+        return result
 
     '''---------------------------------------------------------------------------------------------'''
     '''DeleteTrash'''
@@ -236,8 +239,9 @@ class Grammer:
        # Remove Unit-Productions
         def unit_finder():
             units = list()
+            cfg = copy.deepcopy(cfg_copy)
             for key in cfg_copy.keys():
-                for des in cfg_copy[key]:
+                for des in cfg[key]:
                     if type(des) == list and len(des) == 1:
                         units.append((key, des[0]))
                         cfg_copy[key].remove(des)
@@ -248,9 +252,9 @@ class Grammer:
             unit = units.pop()
             if unit[0] == unit[1]:
                 continue
-            if unit[0] == self.start_var:
+            if unit[0] == self.start_var or len(cfg_copy[unit[0]]):
                 for item in cfg_copy[unit[1]]:
-                    cfg_copy[self.start_var].append(item)
+                    cfg_copy[unit[0]].append(item)
                 units += unit_finder()
             else:
                 for key in cfg_copy.keys():
@@ -333,6 +337,7 @@ class Grammer:
     '''---------------------------------------------------------------------------------------------'''
     '''IsGenerateByGrammer'''
     def IsGenerateByGrammer(self, string: str):
+        string = string.split()
         cfg_chomsky = self.ChangeToChomskyForm()
         r_dict = dict()
         r = 0
@@ -384,7 +389,7 @@ class Grammer:
 
     '''---------------------------------------------------------------------------------------------'''
     def __str__(self):
-        return str([self.cfg, self.isChomskyForm, self.isGreibachNormalForm, self.isDeleteTrash])
+        return str([self.cfg, self.start_var, self.isChomskyForm, self.isGreibachNormalForm, self.isDeleteTrash])
 
 
 
@@ -410,7 +415,7 @@ G1 = Grammer([
 print(G1.ChangeToGreibachForm())
 
 G2 = Grammer([
-    4,
+    5,
     "<S> -> <A><B><C><D>",
     "<A> -> a",
     "<B> -> b",
@@ -419,4 +424,20 @@ G2 = Grammer([
 ])
 print(G2)
 print(G2.ChangeToChomskyForm())
-print(G2.IsGenerateByGrammer('abcd'))
+print(G2.IsGenerateByGrammer('a b c d'))
+
+
+Calculator_G = Grammer([
+    9,
+    "<START> -> <VALUE>|<VALUE><OPERATOR><START>",
+    "<VALUE> -> <NUMBER>|<SIGN><NUMBER>",
+    "<NUMBER> -> <UNSIGNED>|<UNSIGNED><DOT><UNSIGNED>",
+    "<UNSIGNED> -> <DIGIT>|<DIGIT><UNSIGNED>",
+    "<DIGIT> -> 0|1|2|3|4|5|6|7|8|9",
+    "<OPERATOR> -> +|-|*|/|^",
+    "<SIGN> -> (+)|(-)",
+    "<DOT> -> ."
+])
+
+print(Calculator_G.ChangeToChomskyForm())
+print(Calculator_G.IsGenerateByGrammer('1 1 . 1 3 4 + 3 - 2 4'))

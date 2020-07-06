@@ -402,7 +402,7 @@ G = Grammer([
     "<VERB> -> eat|drink|go|<OBJECTS><SUBJECT>",
     "<OBJECTS> -> food|water|lamda"
 ])
-print(G)
+# print(G)
 
 G1 = Grammer([
     4,
@@ -412,7 +412,7 @@ G1 = Grammer([
     "<C> -> a<C>b",
 ])
 
-print(G1.ChangeToGreibachForm())
+# print(G1.ChangeToGreibachForm())
 
 G2 = Grammer([
     5,
@@ -422,9 +422,10 @@ G2 = Grammer([
     "<C> -> c",
     "<D> -> d"
 ])
-print(G2)
-print(G2.ChangeToChomskyForm())
-print(G2.IsGenerateByGrammer('a b c d'))
+
+# print(G2)
+# print(G2.ChangeToChomskyForm())
+# print(G2.IsGenerateByGrammer('a b c d'))
 
 
 Calculator_G = Grammer([
@@ -439,5 +440,5 @@ Calculator_G = Grammer([
     "<DOT> -> ."
 ])
 
-print(Calculator_G.ChangeToChomskyForm())
-print(Calculator_G.IsGenerateByGrammer('1 1 . 1 3 4 + 3 - 2 4'))
+# print(Calculator_G.ChangeToChomskyForm())
+# print(Calculator_G.IsGenerateByGrammer('1 1 . 1 3 4 + 3 * (-) 2 4 ^ 2'))

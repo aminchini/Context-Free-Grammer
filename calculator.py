@@ -78,7 +78,6 @@ if calculator.IsGenerateByGrammer(' '.join(validate)):
             statement.append(item)
             counter += 1
     queue = rpn_convertor(statement)
-    print(queue)
     stack = list()
     while len(queue):
         op = queue.pop(0)
